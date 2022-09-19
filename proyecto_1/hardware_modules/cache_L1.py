@@ -5,6 +5,9 @@ from constants import *
 class Cache:
     blocks = {}
 
+    def __init__(self):
+        self.create_blocks()
+
     def create_blocks(self):
         for i in range(CACHE_BLOCKS):
             self.blocks[i] = ['I', 0b0, 0x0]
