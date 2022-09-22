@@ -33,7 +33,7 @@ def connect_devices(bus, memory, processors):
         bus.connect_cache_controller(proc.cache_controller)
         proc.connect_bus(bus)
         proc.cache_controller.connect_bus(bus)
-    print('\n')
+    print("\n")
 
 def start_processors(processors):
     for proc in processors:
@@ -45,5 +45,6 @@ def print_all_caches(processors):
         print("############# " + str(proc.processor_ID) + " $$$$$$$$$$$")
         for i in range(CACHE_BLOCKS):
                 print(proc.cache_controller.cache.blocks[i])
+    print("\n")
 
 start_simulation()

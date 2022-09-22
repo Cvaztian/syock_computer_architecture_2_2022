@@ -22,7 +22,7 @@ class Processor:
 
     def calc(self):
         self.log("CALC")
-        #time.sleep(ACCESS_TIME)
+        time.sleep(ACCESS_TIME)
 
     def generate_instruction(self):
         op_type = choice((0, 1))
@@ -38,10 +38,6 @@ class Processor:
                 instruction = self.generate_instruction()
                 self.cache_controller.process_CPU_instruction(instruction)
                 print('Completed instruction\n')
-
-    def single_run(self):
-        instruction = self.generate_instruction()
-        print(self.cache_controller.process_CPU_instruction(instruction))
 
     def log(self, message):
         print("[Processor " + str(self.processor_ID) + "]: " + message)

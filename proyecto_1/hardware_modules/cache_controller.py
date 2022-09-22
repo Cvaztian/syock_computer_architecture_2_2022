@@ -6,8 +6,8 @@ from constants import *
 from cache_L1 import Cache
 
 class CacheController:
-    ########## Device creation ##########
 
+    ########## Device creation ##########
     def __init__(self, number):
         self.processor_ID = number
         self.cache = Cache()
@@ -20,7 +20,6 @@ class CacheController:
         self.log("connected to bus")
 
     ########## Communication ##########
-
     def issue_mem_read(self, instruction):
         data = self.bus.transmit_instruction(instruction)
         return data
@@ -104,8 +103,6 @@ class CacheController:
                 self.cache.modify_block(block_key, wr_value)
         else:
             self.broadcast(instruction)
-            #received_data = self.broadcast(instruction)
-            #if not(received_data): received_data = self.issue_mem_read(instruction)
             self.cache_new_data('M', [address, wr_value])
 
     def process_CPU_instruction(self, instruction):
@@ -153,20 +150,3 @@ class CacheController:
 
     def log(self, message):
         print("[Cache_controller_" + str(self.processor_ID) + "]: " + message)
-
-
-
-
-    """def share_exclusive_block(self, block_key):
-        self.cache.blocks[block_key][0] = "S"
-        return self.cache.blocks[block_key]
-        
-    def get_from_another_cache(self, address):
-        exclusive_block = []
-        for controller in self.bus.connected_controllers:
-            is_cached, block, block_key = controller.is_cached(address)
-            if is_cached and block[0] == "E":
-                exclusive_block = controller.share_exclusive_block(block_key)
-                break
-        return exclusive_block
-    """

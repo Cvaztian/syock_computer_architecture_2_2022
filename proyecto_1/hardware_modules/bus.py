@@ -2,11 +2,7 @@ from sys import path
 path.append("../")
 from constants import *
 
-import memory, processor
-
 class Bus:
-    #serialized_instructions = []
-    #transmitting = False
     connected_cache_controllers = []
     connected_processors = []
     connected_memory = None
