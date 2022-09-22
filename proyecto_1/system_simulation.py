@@ -1,3 +1,4 @@
+from concurrent.futures import process
 from sys import path
 path.append("./hardware_modules")
 
@@ -12,7 +13,7 @@ def start_simulation():
     connect_devices(bus, memory, processors)
 
     start_processors(processors)
-    
+        
     print("\n###### Exiting simulation ######")
     return
 
@@ -37,5 +38,12 @@ def connect_devices(bus, memory, processors):
 def start_processors(processors):
     for proc in processors:
         proc.start_processor()
+        print_all_caches(processors)
+
+def print_all_caches(processors):
+    for proc in processors:
+        print("############# " + str(proc.processor_ID) + " $$$$$$$$$$$")
+        for i in range(CACHE_BLOCKS):
+                print(proc.cache_controller.cache.blocks[i])
 
 start_simulation()
