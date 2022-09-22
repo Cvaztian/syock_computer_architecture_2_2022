@@ -3,9 +3,8 @@ path.append("../")
 from constants import *
 
 class Cache:
-    blocks = {}
-
     def __init__(self):
+        self.blocks = {}
         self.create_blocks()
 
     def create_blocks(self):
