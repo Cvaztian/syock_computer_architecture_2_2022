@@ -1,7 +1,7 @@
-from dis import Instruction
 from sys import path
 path.append("../")
 from constants import *
+from common import *
 
 from cache_L1 import Cache
 
@@ -9,15 +9,16 @@ class CacheController:
 
     ########## Device creation ##########
     def __init__(self, number):
+        self.name = "Cache_controller" + str(number)
         self.processor_ID = number
         self.cache = Cache()
         self.bus = None
         self.last_accessed_blocks = [i for i in range(CACHE_BLOCKS)]
-        self.log("created")
+        log(self.name, "created")
 
     def connect_bus(self, bus):
         self.bus = bus
-        self.log("connected to bus")
+        log(self.name, "connected to bus")
 
     ########## Communication ##########
     def issue_mem_read(self, instruction):
@@ -28,23 +29,20 @@ class CacheController:
         self.bus.transmit_instruction(instruction)
 
     def broadcast(self, instruction):
-        self.log("broadcasting " + str(instruction))
+        log(self.name, "broadcasting " + str(instruction))
         data = self.bus.propagate_broadcast(instruction)
         return data
-
-    def get_processor_ID(self):
-        return self.processor_ID
 
     ########## Cache control ##########
 
     def cache_new_data(self, status, data):
         least_used_key = self.last_accessed_blocks[-1]
-        self.log('caching new block ' + str(least_used_key) + str({'status': status, 'data': data}))
+        log(self.name, 'caching new block ' + str(least_used_key) + str({'status': status, 'data': data}))
         self.cache.write_block(least_used_key, {'status': status, 'data': data})
         self.update_access(least_used_key)
 
     def write_to_cache_block(self, block_key, status, data):
-        self.log('writing to cache block ' + str(block_key) + str({'status': status, 'data': data}))
+        log(self.name, 'writing to cache block ' + str(block_key) + str({'status': status, 'data': data}))
         self.cache.write_block(block_key, {'status': status, 'data': data})
         self.update_access(block_key)
 
@@ -65,18 +63,18 @@ class CacheController:
     ########## Coherence ##########
 
     def read_cache(self, instruction):
-        self.log('reading cache for ' + str(instruction))
+        log(self.name, 'reading cache for ' + str(instruction))
         address = instruction['address']
         is_cached, block, block_key = self.is_cached(address)
         if not(is_cached):
-            self.log('cache miss for ' + str(instruction))
+            log(self.name, 'cache miss for ' + str(instruction))
             received_data = self.broadcast(instruction)
             if received_data: self.cache_new_data('S', received_data)
             elif not(received_data): 
                 received_data = self.issue_mem_read(instruction)
                 self.cache_new_data('E', received_data)
         elif block['status'] == "I":
-            self.log('cache miss for ' + str(instruction))
+            log(self.name, 'cache miss for ' + str(instruction))
             received_data = self.broadcast(instruction)
             if received_data: self.write_to_cache_block(block_key, 'S', received_data)
             elif not(received_data): 
@@ -89,24 +87,25 @@ class CacheController:
         return return_value
 
     def write_cache(self, instruction):
-        self.log('write cache for ' + str(instruction))
         address, wr_value = instruction['address'], instruction['value']
+        log(self.name, 'write cache for ' + str(bin(address)))
         is_cached, block, block_key = self.is_cached(address)
         if is_cached:
-            if (block['status'] == "M" or block['status'] == "E"): self.cache.modify_block(block_key, wr_value)
-            elif block['status'] == "S":
+            status = block['status']
+            if (status == "M" or status == "E"): self.cache.modify_block(block_key, wr_value)
+            elif status == "S":
                 self.broadcast(instruction)
                 self.cache.modify_block(block_key, wr_value)
-            elif block['status'] == "I":
-                received_data = self.broadcast(instruction)
-                if not(received_data): received_data = self.issue_mem_read(instruction)
+            elif status == "I":
+                self.broadcast(instruction)
                 self.cache.modify_block(block_key, wr_value)
+            self.update_access(block_key)
         else:
             self.broadcast(instruction)
             self.cache_new_data('M', [address, wr_value])
 
     def process_CPU_instruction(self, instruction):
-        self.log('processing ' + str(instruction))
+        log(self.name, 'processing ' + str(instruction))
         requested_value = 0
         match instruction['op_type']:
             case "READ": requested_value = self.read_cache(instruction)
@@ -114,7 +113,7 @@ class CacheController:
         return requested_value
 
     def monitor_instruction(self, instruction):
-        self.log('monitoring ' + str(instruction))
+        log(self.name, 'monitoring ' + str(instruction))
         response = None
         is_cached, block, block_key = self.is_cached(instruction['address'])
         if is_cached:
@@ -122,7 +121,7 @@ class CacheController:
         return response
 
     def apply_coherence_protocol(self, instruction, own_block, own_block_key):
-        self.log('applying coherence for ' + str(instruction))
+        log(self.name, 'applying coherence for ' + str(instruction))
         is_read = (instruction['op_type'] == "READ")
         is_write = (instruction['op_type'] == "WRITE")
         response = None
@@ -141,12 +140,10 @@ class CacheController:
                 elif is_write: self.cache.invalidate_block(own_block_key)
             case 'I':
                 pass
-        self.log('supplying data ' + str(response))
+        log(self.name, 'supplying data ' + str(response))
         return response
 
     def writeback(self, data):
-        self.log('writeback ' + str(data))
+        log(self.name, 'writeback ' + str(data))
         self.issue_mem_write({'CPU_ID': self.processor_ID, 'op_type': "WRITE", 'address': data[0], 'value': data[1]})
-
-    def log(self, message):
-        print("[Cache_controller_" + str(self.processor_ID) + "]: " + message)
+        

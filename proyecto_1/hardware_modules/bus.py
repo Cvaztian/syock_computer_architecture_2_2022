@@ -1,14 +1,16 @@
 from sys import path
 path.append("../")
-from constants import *
+from common import *
 
 class Bus:
+    name = "Bus"
     connected_cache_controllers = []
     connected_processors = []
     connected_memory = None
 
+    ########## Device creation ##########
     def __init__(self):
-        self.log("created")
+        log(self.name, "created")
 
     def connect_processor(self, processor):
         self.connected_processors.append(processor)
@@ -19,23 +21,22 @@ class Bus:
     def connect_memory(self, memory):
         self.connected_memory = memory
 
+    ########## Communication ##########
     def transmit_instruction(self, instruction):
         data = self.connected_memory.execute_instruction(instruction)
         return data
-
-    def get_cache_controller(self, controller_ID):
-        for controller in self.connected_cache_controllers:
-            if controller.get_processor_ID() == controller_ID: return controller
 
     def propagate_broadcast(self, instruction):
         broadcaster_ID = instruction['CPU_ID']
         return_data = None
         for controller in self.connected_cache_controllers:
-            if controller.get_processor_ID() != broadcaster_ID:
+            if controller.processor_ID != broadcaster_ID:
                 response = controller.monitor_instruction(instruction)
                 if response: return_data = response
-        self.log("supplying " + str(response))
+        log(self.name, "supplying " + str(response))
         return return_data
 
-    def log(self, message):
-            print("[Bus]: " + message)
+    ########## Other ##########
+    def get_cache_controller(self, controller_ID):
+        for controller in self.connected_cache_controllers:
+            if controller.processor_ID == controller_ID: return controller
