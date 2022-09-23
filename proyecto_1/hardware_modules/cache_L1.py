@@ -1,8 +1,9 @@
 from sys import path
 path.append("../")
-from constants import *
+from common import *
 
 class Cache:
+    ########## Device creation ##########
     def __init__(self):
         self.blocks = {}
         self.create_blocks()
@@ -11,6 +12,7 @@ class Cache:
         for i in range(CACHE_BLOCKS):
             self.blocks[i] = {'status': 'I', 'data': [0b0, 0x0]}
 
+    ########## Cache blocks interaction ##########
     def modify_block(self, block_key, new_value):
         self.blocks[block_key]['status'] = 'M'
         self.blocks[block_key]['data'][1] = new_value
@@ -26,3 +28,8 @@ class Cache:
 
     def write_block(self, block_key, block):
         self.blocks[block_key] = block
+
+    ########## Other ##########
+    def print_cache(self):
+        for i in range(CACHE_BLOCKS):
+            print(self.blocks[i])
