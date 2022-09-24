@@ -1,8 +1,10 @@
+from audioop import add
 from sys import path
 path.append("../")
 from common import *
 
 class Memory:
+    ui_element = None
     name = "Memory"
     blocks = {}
     bus = None
@@ -35,4 +37,20 @@ class Memory:
     def write_mem(self, address, value):
         log(self.name, str(bin(address)) + " <- " + str(hex(value)))
         self.blocks[address] = value
+        self.update_ui_status(address, value)
 
+    ########## Coherence ##########
+
+    def update_ui_status(self, address, value):
+        if self.ui_element:
+            index = list(self.blocks.keys()).index(address)
+            address = str(bin(address))
+            value = str(hex(value))
+            self.ui_element.modifyValueInMem(index, "{}: {}".format(address, value))
+
+    def start_ui(self):
+        if self.ui_element:
+            for i in range(MEMORY_BLOCKS):
+                address = str(bin(MEMORY_BASE_ADDR+i))
+                value = str(hex(0))
+                self.ui_element.addValueToMem("{}: {}".format(address, value))
