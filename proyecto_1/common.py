@@ -9,3 +9,6 @@ def log(device, message):
 
 def wait_execution(seconds):
     time.sleep(seconds)
+
+def connect_device_to_ui(device, ui_element):
+    device.ui_element = ui_element

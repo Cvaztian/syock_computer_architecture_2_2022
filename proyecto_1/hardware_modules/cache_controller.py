@@ -9,6 +9,7 @@ class CacheController:
 
     ########## Device creation ##########
     def __init__(self, number):
+        self.ui_element = None
         self.name = "Cache_controller" + str(number)
         self.processor_ID = number
         self.cache = Cache()
@@ -67,6 +68,7 @@ class CacheController:
         address = instruction['address']
         is_cached, block, block_key = self.is_cached(address)
         if not(is_cached):
+            self.update_ui_status("Miss for {}".format(bin(address)))
             log(self.name, 'cache miss for ' + str(instruction))
             received_data = self.broadcast(instruction)
             if received_data: self.cache_new_data('S', received_data)
@@ -74,6 +76,7 @@ class CacheController:
                 received_data = self.issue_mem_read(instruction)
                 self.cache_new_data('E', received_data)
         elif block['status'] == "I":
+            self.update_ui_status("Miss for {}".format(bin(address)))
             log(self.name, 'cache miss for ' + str(instruction))
             received_data = self.broadcast(instruction)
             if received_data: self.write_to_cache_block(block_key, 'S', received_data)
@@ -81,6 +84,7 @@ class CacheController:
                 received_data = self.issue_mem_read(instruction)
                 self.write_to_cache_block(block_key, 'E', received_data)
         else:
+            self.update_ui_status("Hit for {}".format(bin(address)))
             received_data = block['data']
             self.update_access(block_key)
         return_value = received_data
@@ -97,10 +101,12 @@ class CacheController:
                 self.broadcast(instruction)
                 self.cache.modify_block(block_key, wr_value)
             elif status == "I":
+                self.update_ui_status("Miss for {}".format(bin(address)))
                 self.broadcast(instruction)
                 self.cache.modify_block(block_key, wr_value)
             self.update_access(block_key)
         else:
+            self.update_ui_status("Miss for {}".format(bin(address)))
             self.broadcast(instruction)
             self.cache_new_data('M', [address, wr_value])
 
@@ -111,6 +117,8 @@ class CacheController:
             case "READ": requested_value = self.read_cache(instruction)
             case "WRITE": self.write_cache(instruction)
         return requested_value
+
+    ########## Monitoration ##########
 
     def monitor_instruction(self, instruction):
         log(self.name, 'monitoring ' + str(instruction))
@@ -146,4 +154,9 @@ class CacheController:
     def writeback(self, data):
         log(self.name, 'writeback ' + str(data))
         self.issue_mem_write({'CPU_ID': self.processor_ID, 'op_type': "WRITE", 'address': data[0], 'value': data[1]})
-        
+    
+    ########## UI ##########
+
+    def update_ui_status(self, message):
+        self.ui_element.setControlValue(message)
+
